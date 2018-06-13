@@ -26,7 +26,7 @@ switch (SCENE)
     case('prod'):
     {
         configObj = {
-            gameServerUrl: 'http://172.16.2.115:13651',
+            gameServer: 'http://172.16.2.115:13651',
             fetchIntervalMinutes: 30,
             logPath: path.join(__dirname, '../logs')
         };
