@@ -32,31 +32,45 @@ Fetcher.start((dataFetched)=>{
     }
 }, Config.fetchIntervalMinutes*60*1000);
 
-
+//使用Request库发送数据
+function postDateViaLib(destHost, formData) {
+    Request.post({
+            url: `${destHost}/gmtools?{"area":10002,"handler":"ModifyLotteryOdds","postField":"data","server_id":16842753}`,
+            form: formData,
+            timeout: 10000
+        },
+        function (err, res, body) {
+            if (!err) {
+                let resData = JSON.parse(res.body);
+                if(resData.result===1)//成功
+                {
+                    Logger.info(`向游戏服(${destHost})传数据成功`);
+                }
+                else
+                {
+                    Logger.error(`向游戏服(${destHost})传数据失败：${resData.data}`);
+                }
+            }
+            else {
+                Logger.error(`向游戏服(${destHost})传数据失败：${err}`);
+            }
+        }
+    );
+}
 //示例：[{"date":1528789866356,"visitingOdds":20,"homeOdds":10,"dogFall":30,"homeTeam":"主队0","visitingTeam":"客队0"},{"date":1528789866357,"visitingOdds":21,"homeOdds":11,"dogFall":31,"homeTeam":"主队1","visitingTeam":"客队1"},{"date":1528789866358,"visitingOdds":22,"homeOdds":12,"dogFall":32,"homeTeam":"主队2","visitingTeam":"客队2"}]
 function sendDateToServer(dataFetched){
     if(dataFetched.length)
     {
-        Request.post({
-                url: `${Config.gameServer}/gmtools?{"area":10002,"handler":"ModifyLotteryOdds","postField":"data","server_id":16842753}`,
-                form: {data: JSON.stringify(dataFetched)}
-            },
-            function (err, res, body) {
-                if (!err) {
-                    let resData = JSON.parse(res.body);
-                    if(resData.result===1)//成功
-                    {
-                        Logger.info('向游戏服传数据成功');
-                    }
-                    else
-                    {
-                        Logger.error(`游戏服传数据失败：${resData.data}`);
-                    }
-                }
-                else {
-                    Logger.error(`游戏服传数据失败：${err}`);
-                }
+        if(typeof(Config.gameServer) === 'string')
+        {
+            postDateViaLib(Config.gameServer, {data: JSON.stringify(dataFetched)});
+        }
+        else if(Config.gameServer.length)
+        {
+            for(let i=0;i<Config.gameServer.length;i++)
+            {
+                postDateViaLib(Config.gameServer[i], {data: JSON.stringify(dataFetched)});
             }
-        );
+        }
     }
 }

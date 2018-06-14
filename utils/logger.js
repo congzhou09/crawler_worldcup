@@ -10,6 +10,11 @@ if ( !fs.existsSync(logPath) || !fs.statSync(logPath).isDirectory()) {
     fs.mkdirSync(logPath, 0o777);
 }
 
+function getTimeStamp(){
+    let oneTime = new Date();
+    return `${oneTime.toLocaleTimeString()}.${oneTime.getMilliseconds()}`;
+}
+
 var Logger = {
     core: new (winston.Logger)({
         transports: [
@@ -18,18 +23,21 @@ var Logger = {
             }),
             new (winston.transports.DailyRotateFile)({
                 level: 'info',
+                timestamp: getTimeStamp,
                 filename: path.join(logPath, 'info'),
                 datePattern: '-yyyy-MM-dd.log',
                 name: 'info'
             }),
             new (winston.transports.DailyRotateFile)({
                 level: 'warn',
+                timestamp: getTimeStamp,
                 filename: path.join(logPath, 'warn'),
                 datePattern: '-yyyy-MM-dd.log',
                 name: 'warn'
             }),
             new (winston.transports.DailyRotateFile)({
                 level: 'error',
+                timestamp: getTimeStamp,
                 filename: path.join(logPath, 'error'),
                 datePattern: '-yyyy-MM-dd.log',
                 name: 'error'

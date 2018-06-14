@@ -60,54 +60,72 @@ fetcher.fetchDataContinuously = function(intervalTime){
     }
 
     this.fetchDataOnce();
+    if(this.timer)
+    {
+        clearInterval(this.timer);
+        this.timer = null;
+    }
     this.timer = setInterval(()=>{
         this.fetchDataOnce();
     }, intervalTime);
 };
 
 fetcher.fetchDataOnce = function() {
+    let hasCatchedError = false;
     (async ()=>{
         try{
             if(this.phantomInstance&&this.webPage)
             {
                 Logger.info(`${moduleName} 开始载入页面`);
                 const status = await this.webPage.open('http://odds.500.com/#!league=%5B40%2C65%2C109%2C135%2C352%5D');
-                const content = await this.webPage.property('content');
-                // console.log(content);
-                Logger.info(`${moduleName} 开始解析页面`);
-                const $ = Cheerio.load(content);
-
-                let matchObjArr = [];
-                //比赛是“世界杯”，且公司是“Bet365”的tr
-                $('#main-tbody tr[data-mid="110"][data-cid="3"]').each((i, elem)=>{
-                    let oneMatchObj = {
-                        match_time: $(elem).find('td:nth-child(4)').text(),
-                        odds_win: $(elem).find('td:nth-child(12)').text(),
-                        odds_draw: $(elem).find('td:nth-child(13)').text(),
-                        odds_lose: $(elem).find('td:nth-child(14)').text(),
-                    };
-                    let teamLinkNodes = $(elem).find('a.team_link');
-                    if(teamLinkNodes.length>=2)
-                    {
-                        oneMatchObj.home_team = $(teamLinkNodes[0]).attr('title');
-                        oneMatchObj.visiting_team = $(teamLinkNodes[1]).attr('title');
-                    }
-
-                    matchObjArr.push(oneMatchObj);
-                });
-                // console.log(matchObjArr);
-                Logger.info(`${moduleName} 解析结果输出`);
-                if(this.dataCallback)
+                if(status==='success')
                 {
-                    this.dataCallback(matchObjArr);
+                    const content = await this.webPage.property('content');
+                    // console.log(content);
+                    Logger.info(`${moduleName} 开始解析页面`);
+                    const $ = Cheerio.load(content);
+
+                    let matchObjArr = [];
+                    //比赛是“世界杯”，且公司是“Bet365”的tr
+                    $('#main-tbody tr[data-mid="110"][data-cid="3"]').each((i, elem)=>{
+                        let oneMatchObj = {
+                            match_time: $(elem).find('td:nth-child(4)').text(),
+                            odds_win: $(elem).find('td:nth-child(12)').text(),
+                            odds_draw: $(elem).find('td:nth-child(13)').text(),
+                            odds_lose: $(elem).find('td:nth-child(14)').text(),
+                        };
+                        let teamLinkNodes = $(elem).find('a.team_link');
+                        if(teamLinkNodes.length>=2)
+                        {
+                            oneMatchObj.home_team = $(teamLinkNodes[0]).attr('title');
+                            oneMatchObj.visiting_team = $(teamLinkNodes[1]).attr('title');
+                        }
+
+                        matchObjArr.push(oneMatchObj);
+                    });
+                    // console.log(matchObjArr);
+                    Logger.info(`${moduleName} 解析结果输出`);
+                    if(this.dataCallback)
+                    {
+                        this.dataCallback(matchObjArr);
+                    }
+                }
+                else
+                {
+                    Logger.info(`${moduleName} 载入页面失败`);
+                    throw Error('open page fail');
                 }
             }
         }
         catch(error){
             Logger.error(`${moduleName} 爬取数据时出错:${error}`);
 
-            Logger.info(`${moduleName} 尝试重启`);
-            this.restart();
+            if(!hasCatchedError)
+            {
+                hasCatchedError = true;
+                Logger.info(`${moduleName} 尝试重启`);
+                this.restart();
+            }
         }
     })();
 };
