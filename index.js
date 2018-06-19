@@ -35,7 +35,7 @@ Fetcher.start((dataFetched)=>{
 //使用Request库发送数据
 function postDateViaLib(destHost, formData) {
     Request.post({
-            url: `${destHost}/gmtools?{"area":10002,"handler":"ModifyLotteryOdds","postField":"data","server_id":16842753}`,
+            url: `${destHost}`,
             form: formData,
             timeout: 10000
         },
@@ -52,7 +52,7 @@ function postDateViaLib(destHost, formData) {
                 }
             }
             else {
-                Logger.error(`向游戏服(${destHost})传数据失败：${err}`);
+                Logger.error(`向游戏服(${destHost})传数据失败：${err.message}`);
             }
         }
     );
